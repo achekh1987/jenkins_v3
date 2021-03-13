@@ -1,0 +1,158 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.40">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.8.4"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.8.4">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>pipeline web_app</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+    <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github@1.33.1">
+      <projectUrl>https://github.com/MaksimViarenich/HEH_UI.git/</projectUrl>
+      <displayName></displayName>
+    </com.coravy.hudson.plugins.github.GithubProjectProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>10</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <com.cloudbees.jenkins.GitHubPushTrigger plugin="github@1.33.1">
+          <spec></spec>
+        </com.cloudbees.jenkins.GitHubPushTrigger>
+        <hudson.triggers.SCMTrigger>
+          <spec>*/2 * * * *</spec>
+          <ignorePostCommitHooks>false</ignorePostCommitHooks>
+        </hudson.triggers.SCMTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.90">
+    <script>pipeline{
+    agent {label &apos;docker&apos;}
+    tools {
+        maven &apos;maven3&apos;
+    }
+
+    environment {
+        DOCKER_TAG = &quot;${BUILD_NUMBER}&quot;
+    }
+        stages{
+            stage(&apos;SCM&apos;){
+                steps{
+                     checkout([$class: &apos;GitSCM&apos;,
+          		branches: [[name: &apos;*/master&apos;]],
+          		doGenerateSubmoduleConfigurations: false,
+         		extensions: [[$class: &apos;SubmoduleOption&apos;,
+                        	disableSubmodules: false,
+                        	parentCredentials: false,
+                        	recursiveSubmodules: true,
+                        	reference: &apos;&apos;,
+                        	trackingSubmodules: false]], 
+          		submoduleCfg: [], 
+          		userRemoteConfigs: [[url: &apos;https://github.com/MaksimViarenich/HEH_UI.git&apos;]]])
+                    echo &quot;Start of Stage Download&quot;
+                    echo &quot;Download......&quot;
+                    //git credentialsId: &apos;heh_ui&apos;, url: &apos;https://github.com/MaksimViarenich/HEH_UI.git&apos;
+                    echo &quot;End of Stage Download&quot;
+                }
+            }
+            /*stage(&apos;Sonarqube&apos;) {
+
+                steps {
+                    withSonarQubeEnv(&apos;webapp&apos;) {
+
+    sh &apos;npm -g install @angular/cli&apos;
+    sh &apos;ng --version&apos;
+
+
+                        timeout(time: 10, unit: &apos;MINUTES&apos;) {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    }
+                }
+            }*/
+            stage(&apos;Build Docker Image&apos;){
+                steps{
+                    sh &apos;&apos;&apos;
+                    cd /home/ubuntu/workspace/jen_web_app/heh-ui
+                    pwd
+                    ls -la
+                    curl http://2ip.ru
+                    sudo docker build . -t mikhailyesman/webapp:1..${DOCKER_TAG}
+                    sudo docker image ls&apos;&apos;&apos;
+                }
+            }
+            
+            stage(&apos;Push Docker Image&apos;){
+                steps{
+                    withCredentials([string(credentialsId: &apos;docker-hub&apos;, variable: &apos;dockerHubPwd&apos;)]) {
+                        sh &quot;sudo  docker login -u mikhailyesman -p ${dockerHubPwd}&quot;
+                    }
+                    sh &quot;sudo docker push mikhailyesman/webapp:1..${DOCKER_TAG}&quot;
+                    sh &quot;sudo docker rmi -f  mikhailyesman/webapp:1..${DOCKER_TAG}&quot;
+                }
+            }
+            
+            stage(&apos;Run Container on Test Server&apos;){
+                steps{
+                    
+                    sshagent([&apos;kluu&apos;]) {
+                        sh &quot;ssh -o StrictHostKeyChecking=no ubuntu@18.185.101.150 sudo docker stop my-app&quot;
+                        sh &quot;ssh -o StrictHostKeyChecking=no ubuntu@18.185.101.150  sudo docker rm my-app&quot;
+                        sh &quot;ssh -o StrictHostKeyChecking=no ubuntu@18.185.101.150  sudo docker run -p 80:80 -d --name my-app mikhailyesman/webapp:1..${DOCKER_TAG}&quot;
+                    }
+                    script { 
+                        try {
+                            sh &apos;curl http://18.185.101.150:80 --connect-timeout 3&apos;
+                            sleep(time: 5, unit: &quot;SECONDS&quot;)
+                        }
+                        catch (Throwable e) {
+                        echo &quot;!!!!!!!!!!!!!!!!!!!!!ERROR!!!!!!!!!!!!!!!!!!!!!&quot;
+                        echo &quot;Build not working. Web Test failed&quot;
+                        
+                        currentBuild.result = &quot;FAILURE&quot; //SUCCESS&quot;
+                        exit 0
+                    }
+                }
+                    
+                    
+                    
+                }
+            }
+            
+            stage(&apos;Run Container on Dev Server&apos;){
+                steps{
+                    sh &apos;curl http://2ip.ru&apos;
+
+                    sshagent([&apos;kluu&apos;]) {
+                        sh &quot;ssh -o StrictHostKeyChecking=no ubuntu@18.195.198.162 sudo docker stop my-app&quot;
+                        sh &quot;ssh -o StrictHostKeyChecking=no ubuntu@18.195.198.162  sudo docker rm my-app&quot;
+                        sh &quot;ssh -o StrictHostKeyChecking=no ubuntu@18.195.198.162  sudo docker run -p 80:80 -d --name my-app mikhailyesman/webapp:1..${DOCKER_TAG}&quot;
+                        sh &apos;curl http://2ip.ru&apos;
+                        sh &quot;ssh -o StrictHostKeyChecking=no ubuntu@18.195.198.162 sudo docker stop my-app&quot;
+                        sh &quot;ssh -o StrictHostKeyChecking=no ubuntu@18.195.198.162  sudo docker rm my-app&quot;
+                        sh &quot;ssh -o StrictHostKeyChecking=no ubuntu@18.195.198.162  sudo docker run -p 80:80 -d --name my-app mikhailyesman/webapp:1..${DOCKER_TAG}&quot;
+                        sh &apos;curl http://2ip.ru&apos;
+                    }
+                }
+            }
+        }
+
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <quietPeriod>30</quietPeriod>
+  <disabled>false</disabled>
+</flow-definition>

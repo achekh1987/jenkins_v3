@@ -1,0 +1,61 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<hudson.model.Queue_-State>
+  <counter>185</counter>
+  <items>
+    <hudson.model.Queue_-BlockedItem>
+      <actions>
+        <hudson.model.CauseAction>
+          <causeBag class="linked-hash-map">
+            <entry>
+              <hudson.triggers.SCMTrigger_-SCMTriggerCause>
+                <pollingLog>Started on Mar 8, 2021, 7:22:00 PM
+Using strategy: Default
+[poll] Last Built Revision: Revision 16e7b3fbf54ce18cc17910cbf96acdbb9afaeb9d (refs/remotes/origin/master)
+The recommended git tool is: NONE
+No credentials specified
+ &gt; /usr/bin/git --version # timeout=10
+ &gt; git --version # &apos;git version 2.25.1&apos;
+ &gt; /usr/bin/git ls-remote -h -- https://github.com/MaksimViarenich/HEH_UI.git # timeout=10
+Found 2 remote heads on https://github.com/MaksimViarenich/HEH_UI.git
+[poll] Latest remote head revision on refs/heads/master is: 5c612cfde0ca6501e41542b0fabc1170535be7cd
+Done. Took 0.19 sec
+Changes found
+</pollingLog>
+              </hudson.triggers.SCMTrigger_-SCMTriggerCause>
+              <int>1</int>
+            </entry>
+          </causeBag>
+        </hudson.model.CauseAction>
+      </actions>
+      <id>185</id>
+      <task class="org.jenkinsci.plugins.workflow.job.WorkflowJob">jen_web_app</task>
+      <inQueueSince>1615231320738</inQueueSince>
+      <buildableStartMilliseconds>1615231350884</buildableStartMilliseconds>
+      <outer-class>queue</outer-class>
+    </hudson.model.Queue_-BlockedItem>
+    <hudson.model.Queue_-BuildableItem>
+      <actions/>
+      <id>184</id>
+      <task class="org.jenkinsci.plugins.workflow.support.steps.ExecutorStepExecution$PlaceholderTask" plugin="workflow-durable-task-step@2.38">
+        <context class="org.jenkinsci.plugins.workflow.cps.CpsStepContext" plugin="workflow-cps@2.90">
+          <executionRef class="org.jenkinsci.plugins.workflow.job.WorkflowRun$Owner" plugin="workflow-job@2.40">
+            <job>jen_web_app</job>
+            <id>88</id>
+          </executionRef>
+          <id>3</id>
+          <bodyHeads/>
+          <body class="org.jenkinsci.plugins.workflow.cps.StaticBodyReference" resolves-to="org.jenkinsci.plugins.workflow.cps.HandleBodyReference">
+            <id>1</id>
+          </body>
+          <threadId>0</threadId>
+          <stepDescriptorId>org.jenkinsci.plugins.workflow.support.steps.ExecutorStep</stepDescriptorId>
+        </context>
+        <label>docker</label>
+        <runId>jen_web_app#88</runId>
+      </task>
+      <inQueueSince>1615231231622</inQueueSince>
+      <buildableStartMilliseconds>1615231231626</buildableStartMilliseconds>
+      <isPending>false</isPending>
+    </hudson.model.Queue_-BuildableItem>
+  </items>
+</hudson.model.Queue_-State>

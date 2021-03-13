@@ -1,0 +1,7 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<list>
+  <flow-owner plugin="workflow-job@2.40">
+    <job>jen_web_app</job>
+    <id>88</id>
+  </flow-owner>
+</list>

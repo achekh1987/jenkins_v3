@@ -1,0 +1,41 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.40">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github@1.33.1">
+      <projectUrl>https://github.com/MaksimViarenich/HEH_UI.git/</projectUrl>
+      <displayName></displayName>
+    </com.coravy.hudson.plugins.github.GithubProjectProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.90">
+    <script>node{
+   stage(&apos;SCM Checkout&apos;){
+     git &apos;https://github.com/MaksimViarenich/HEH_UI.git&apos;
+   }
+   stage(&apos;Compile-Package&apos;){
+      // Get maven home path
+      def mvnHome =  tool name: &apos;maven3&apos;, type: &apos;maven&apos;
+      sh &quot;${mvnHome}/bin/mvn package&quot;
+      
+        withSonarQubeEnv(&apos;webapp&apos;) {
+            sh &quot;${mvnHome}/bin/mvn sonar:sonar&quot;
+            
+        }
+   }
+   stage(&apos;SonarQube Analysis&apos;) {
+        def mvnHome =  tool name: &apos;maven3&apos;, type: &apos;maven&apos;
+        withSonarQubeEnv(&apos;webapp&apos;) { 
+          sh &quot;$mvn clean package sonar:sonarr&quot;
+        }
+    }
+    
+
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
